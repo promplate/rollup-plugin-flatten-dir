@@ -75,12 +75,11 @@ export default (options: {
         const [parentPath, entries] = dirEntries.pop()!
         const absoluteParentPath = path.join(dirPath, parentPath)
         promises.push(...entries.map(async (entry) => {
-          if (entry.isFile() && filter(entry.name)) {
-            const filePath = path.join(absoluteParentPath, entry.name)
+          const filePath = path.join(absoluteParentPath, entry.name)
+          const relativePath = normalizePath(path.relative(dirPath, filePath))
+          if (entry.isFile() && filter(relativePath) && relativePath !== "index.d.ts") {
             this.addWatchFile(filePath)
-            const relativePath = path.relative(dirPath, filePath)
-            const content = await fs.readFile(filePath, "utf-8")
-            files[normalizePath(relativePath)] = content // \ -> /
+            files[relativePath] = await fs.readFile(filePath, "utf-8")
           }
           else if (entry.isDirectory()) {
             dirEntries.push([path.join(parentPath, entry.name), await fs.readdir(path.join(absoluteParentPath, entry.name), { withFileTypes: true, encoding: "utf-8" })])
@@ -94,7 +93,7 @@ export default (options: {
       const fileContent = `export default ${JSON.stringify(files)};`
 
       // generate .d.ts file for this directory
-      await fs.writeFile(path.join(dirPath, "index.d.ts"), fileContent, "utf-8")
+      await fs.writeFile(path.join(dirPath, "index.d.ts"), `export default {} as {${Object.keys(files).sort((a, b) => a.localeCompare(b)).map(name => `\n  ${JSON.stringify(name)}: string;`).join("")}\n}`, "utf-8")
 
       return fileContent
     },

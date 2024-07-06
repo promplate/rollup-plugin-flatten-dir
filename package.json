@@ -1,7 +1,7 @@
 {
   "name": "rollup-plugin-flatten-dir",
   "type": "module",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A Rollup and Vite plugin that flatten a specified directory into a Record<string, string> object.",
   "license": "MIT",
   "repository": {
